@@ -1,3 +1,33 @@
+document.getElementById('send-btn').addEventListener('click', sendMessage);
+
+function sendMessage() {
+    const input = document.getElementById('user-input');
+    const msg = input.value.trim();
+    if (!msg) return;
+
+    appendMessage('user', msg);
+    input.value = '';
+
+    fetch('/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: msg })
+    })
+    .then(res => res.json())
+    .then(data => {
+        appendMessage('ai', data.reply);
+    })
+    .catch(err => appendMessage('ai', "Server Down hai!"));
+}
+
+function appendMessage(sender, text) {
+    const box = document.getElementById('chat-box');
+    const div = document.createElement('div');
+    div.className = `msg ${sender}`;
+    div.innerText = text;
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+}
 body {
     margin:0;
     font-family:sans-serif;
