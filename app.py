@@ -1,39 +1,68 @@
-from flask import Flask, request, jsonify, render_template_string
+import os
+import re
+from flask import Flask, request, jsonify, render_template
 import google.generativeai as genai
-import os, random
 
 app = Flask(__name__)
 
-# ===== GEMINI SETUP =====
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-model = genai.GenerativeModel("gemini-pro")
+# 1. API Setup (Render Environment Variable)
+api_key = os.getenv("GEMINI_API_KEY")
+genai.configure(api_key=api_key)
 
-# ===== MEMORY =====
-memory = {"lazy": 0, "success": 0}
-history = []
-last_reply = ""
-CREATOR = "Abdul Hai"
+# 2. Memory & Behavior Setup
+# Yahan 'Abdul Hai' as creator fixed hai aur 'No Emoji' rule strict hai.
+model = genai.GenerativeModel('gemini-pro')
+chat_history = [] # Memory storage
 
-# ===== NO REPEAT =====
-def pick(options):
-    global last_reply
-    random.shuffle(options)
-    for opt in options:
-        if opt != last_reply:
-            last_reply = opt
-            return opt
-    return options[0]
+SYSTEM_INSTRUCTION = (
+    "Identity: You are PsychoSense AI, created by Abdul Hai. "
+    "Behavior: Professional, firm, and observant psychology coach. "
+    "Language: Hinglish. "
+    "Rules: 1. Strict NO EMOJI policy. 2. Never repeat phrases. "
+    "3. Keep responses brief and logic-driven. 4. Be blunt but helpful."
+)
 
-# ===== ANALYZE =====
-def analyze(text):
-    t = (text or "").lower()
+# Emojis hatane ka function (Fallback filter)
+def remove_emojis(text):
+    return re.sub(r'[^\x00-\x7f]', r'', text)
 
-    if any(w in t for w in ["kal", "baad me", "nahi karunga"]):
-        memory["lazy"] += 1
-        return "STRICT"
+@app.route('/')
+def home():
+    return render_template('index.html')
 
-    elif any(w in t for w in ["done", "kar liya", "complete"]):
-        memory["success"] += 1
+@app.route('/chat', methods=['POST'])
+def chat():
+    user_input = request.json.get("message")
+    global chat_history
+
+    if not user_input:
+        return jsonify({"reply": "Kuch likh tabhi toh observe karunga."})
+
+    try:
+        # 3. Contextual Memory (Last 5 chats yaad rakhega)
+        context = "\n".join(chat_history[-5:])
+        full_prompt = f"{SYSTEM_INSTRUCTION}\nContext:\n{context}\nUser: {user_input}\nPsychoSense:"
+
+        response = model.generate_content(full_prompt)
+        
+        # 4. Clean & Filter Output
+        reply = remove_emojis(response.text).strip()
+        
+        # History update
+        chat_history.append(f"User: {user_input}")
+        chat_history.append(f"AI: {reply}")
+
+        return jsonify({"reply": reply})
+
+    except Exception as e:
+        # 5. Fallback (System Crash nahi hoga)
+        print(f"Error: {e}")
+        return jsonify({"reply": "System overload ho raha hai. Seedha point pe baat kar dobara."})
+
+if __name__ == "__main__":
+    # Render dynamic port support
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host='0.0.0.0', port=port)
         return "SOFT"
 
     elif any(w in t for w in ["masti", "bakchodi", "fun"]):
