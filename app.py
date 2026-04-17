@@ -1,10 +1,7 @@
 from flask import Flask, request, jsonify, render_template_string
-from openai import OpenAI
-import os
+import random
 
 app = Flask(__name__)
-
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 memory = {"lazy": 0, "success": 0}
 last_mode = None
@@ -31,67 +28,63 @@ def reply(mode, msg):
     global last_mode
     m = (msg or "").lower()
 
-    # creator hard control
+    # creator
     if any(x in m for x in ["creator", "kisne banaya", "who made you"]):
         return f"Mujhe {CREATOR} ne banaya hai"
 
-    savage_level = "low"
-    if memory["lazy"] > 3:
-        savage_level = "high"
+    # savage level
+    savage = memory["lazy"]
 
-    prompt = f"""
-You are PsychoSense, a psychological AI created by {CREATOR}.
+    # direct reactions
+    if "hi" in m or "hello" in m:
+        return random.choice([
+            "Haan bol, kya chal raha hai?",
+            "Aaj kya scene hai?",
+        ])
 
-Mode: {mode}
-Savage level: {savage_level}
+    if "nhi" in m or "kuch nhi" in m:
+        return random.choice([
+            "Har baar 'kuch nahi' ke peeche kuch hota hai",
+            "Tu avoid kar raha hai bas bol nahi raha",
+        ])
 
-User message: {msg}
+    if "chal bhag" in m or "abe" in m:
+        return random.choice([
+            "Attitude aa raha hai, par reason bhi hoga",
+            "Bhag sakta hai, par problem wahi rahegi",
+        ])
 
-User stats:
-- Lazy count: {memory['lazy']}
-- Success count: {memory['success']}
-- Previous mode: {last_mode}
+    # mode behavior
+    if mode == "STRICT":
+        if savage > 3:
+            return random.choice([
+                "Tu sirf delay nahi kar raha, ye tera pattern ban gaya hai",
+                "Sach bol, tu khud ko hi ignore kar raha hai",
+            ])
+        return random.choice([
+            "Tu avoid kar raha hai, start kar abhi",
+            "Bahane kam, action zyada",
+        ])
 
-Rules:
-- STRICT: direct, calls out excuses
-- SOFT: supportive, motivating
-- FUN: light, casual
-- NEUTRAL: curious, not repetitive
+    elif mode == "SOFT":
+        return random.choice([
+            "Good, tu effort daal raha hai",
+            "Nice, consistency aa rahi hai",
+        ])
 
-Savage rules:
-- If lazy count high, point out pattern
-- Light roast allowed but no insults
+    elif mode == "FUN":
+        return random.choice([
+            "Chal thoda chill karte hain",
+            "Mood halka kar raha hai tu",
+        ])
 
-General rules:
-- No emojis
-- Short replies (1-2 lines)
-- Human-like tone
-- Do not repeat same question
-
-Respond naturally:
-"""
-
-    try:
-        res = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=80
-        )
-
-        last_mode = mode
-        return res.choices[0].message.content.strip()
-
-    except Exception as e:
-        print("AI ERROR:", e)
-
-        if mode == "STRICT":
-            return "Tu delay kar raha hai. Ye pattern ban raha hai."
-        elif mode == "SOFT":
-            return "Good. Aise hi continue kar."
-        elif mode == "FUN":
-            return "Chal thoda chill karte hain."
-        else:
-            return "Seedha bol. Kya chal raha hai?"
+    # neutral
+    return random.choice([
+        "Seedha bol, kya chal raha hai?",
+        "Tu clearly bol nahi raha abhi",
+        "Andar kuch to chal raha hai",
+        "Main sun raha hoon, bol",
+    ])
 
 
 HTML = '''
