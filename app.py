@@ -1,11 +1,12 @@
 from flask import Flask, request, jsonify, render_template_string
-from openai import OpenAI
+import google.generativeai as genai
 import os, random
 
 app = Flask(__name__)
 
-# ===== OPENAI =====
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+# ===== GEMINI SETUP =====
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+model = genai.GenerativeModel("gemini-pro")
 
 # ===== MEMORY =====
 memory = {"lazy": 0, "success": 0}
@@ -55,18 +56,13 @@ Success: {memory['success']}
 
 Rules:
 - No emojis
-- Short replies (1–2 lines)
+- Short replies (1-2 lines)
 - Human tone
-- If user repeats/avoids, point it out
+- If user avoids or repeats, point it out
 """
 
-    res = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[{"role": "user", "content": prompt}],
-        max_tokens=80
-    )
-
-    return res.choices[0].message.content.strip()
+    response = model.generate_content(prompt)
+    return response.text.strip()
 
 # ===== MAIN REPLY =====
 def reply(mode, msg):
@@ -77,18 +73,17 @@ def reply(mode, msg):
     if len(history) > 5:
         history.pop(0)
 
-    # creator fix
+    # creator
     if any(x in m for x in ["creator", "kisne banaya", "who made you"]):
         return "Mujhe " + CREATOR + " ne banaya hai"
 
-    # try AI
     try:
         return ai_reply(mode, msg)
 
     except Exception as e:
         print("AI ERROR:", e)
 
-        # SAFE fallback (never breaks)
+        # fallback
         if mode == "STRICT":
             return pick([
                 "Tu delay kar raha hai, start kar",
