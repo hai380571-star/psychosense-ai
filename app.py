@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, render_template_string
+import random
 
 app = Flask(__name__)
 
@@ -29,15 +30,30 @@ def reply(mode, msg):
         return f"Mujhe {CREATOR} ne banaya hai"
 
     if mode == "STRICT":
-        return "Sach bol - tu avoid kar raha hai. Start kar abhi."
+        return random.choice([
+            "Sach bol - tu avoid kar raha hai. Abhi start kar.",
+            "Bahane kam, action zyada. Start kar abhi.",
+        ])
 
     elif mode == "SOFT":
-        return "Good. Tu effort daal raha hai - continue kar."
+        return random.choice([
+            "Good. Tu effort daal raha hai.",
+            "Nice. Aise hi continue kar.",
+        ])
 
     elif mode == "FUN":
-        return "Bakchodi mode ON. Bol kya kare?"
+        return random.choice([
+            "Bakchodi mode ON. Bol kya kare?",
+            "Chal thoda masti karte hain 😏",
+        ])
 
-    return "Seedha bol - andar kya chal raha hai?"
+    # NEUTRAL (improved)
+    return random.choice([
+        "Hmmm... thoda aur detail me bata",
+        "Itna short nahi, clearly bol",
+        "Andar kya chal raha hai sach me?",
+        "Tu kuch chhupa raha hai kya?"
+    ])
 
 
 HTML = '''
@@ -159,7 +175,9 @@ async function send(){
         let data = await res.json();
 
         typing.remove();
-        addMsg(data.reply + "<br><small>"+data.mode+"</small>","bot");
+
+        // ❌ mode remove kar diya
+        addMsg(data.reply,"bot");
 
     } catch(err){
         typing.remove();
@@ -179,21 +197,16 @@ def home():
 
 @app.route("/chat", methods=["POST"])
 def chat():
-    try:
-        data = request.get_json(silent=True) or {}
-        user = data.get("message") or data.get("msg") or ""
+    data = request.get_json(silent=True) or {}
+    user = data.get("message") or ""
 
-        if not user:
-            return jsonify({"reply": "Kuch to bol", "mode": "error"})
+    if not user:
+        return jsonify({"reply": "Kuch to bol", "mode": "error"})
 
-        mode = analyze(user)
-        res = reply(mode, user)
+    mode = analyze(user)
+    res = reply(mode, user)
 
-        return jsonify({"reply": res, "mode": mode})
-
-    except Exception as e:
-        print("ERROR:", e)
-        return jsonify({"reply": "Server error", "mode": "error"})
+    return jsonify({"reply": res})
 
 
 if __name__ == "__main__":
