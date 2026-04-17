@@ -1,7 +1,11 @@
 from flask import Flask, request, jsonify, render_template_string
-import random
+from openai import OpenAI
+import os, random
 
 app = Flask(__name__)
+
+# ===== OPENAI =====
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # ===== MEMORY =====
 memory = {"lazy": 0, "success": 0}
@@ -9,7 +13,7 @@ history = []
 last_reply = ""
 CREATOR = "Abdul Hai"
 
-# ===== HELPER (NO REPEAT) =====
+# ===== NO REPEAT =====
 def pick(options):
     global last_reply
     random.shuffle(options)
@@ -36,92 +40,75 @@ def analyze(text):
 
     return "NEUTRAL"
 
-# ===== REPLY =====
+# ===== AI REPLY =====
+def ai_reply(mode, msg):
+    prompt = f"""
+You are PsychoSense, a psychological AI created by Abdul Hai.
+
+Mode: {mode}
+
+User message: {msg}
+
+User stats:
+Lazy: {memory['lazy']}
+Success: {memory['success']}
+
+Rules:
+- No emojis
+- Short replies (1–2 lines)
+- Human tone
+- If user repeats/avoids, point it out
+"""
+
+    res = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "user", "content": prompt}],
+        max_tokens=80
+    )
+
+    return res.choices[0].message.content.strip()
+
+# ===== MAIN REPLY =====
 def reply(mode, msg):
     global history
     m = (msg or "").lower()
 
     history.append(m)
-    if len(history) > 6:
+    if len(history) > 5:
         history.pop(0)
 
-    # creator
+    # creator fix
     if any(x in m for x in ["creator", "kisne banaya", "who made you"]):
         return "Mujhe " + CREATOR + " ne banaya hai"
 
-    # patterns
-    repeat_count = history.count(m)
+    # try AI
+    try:
+        return ai_reply(mode, msg)
 
-    avoid_words = ["kuch nhi", "nhi", "pata nhi"]
-    avoid_count = sum(1 for h in history if any(w in h for w in avoid_words))
+    except Exception as e:
+        print("AI ERROR:", e)
 
-    frustration = any(w in m for w in ["abe", "yaar", "bhag"])
-
-    # ===== RESPONSES =====
-
-    if "hi" in m or "hello" in m:
-        return pick([
-            "Aaj kya chal raha hai dimaag me",
-            "Seedha bol, kya soch raha hai",
-            "Kya scene hai aaj",
-        ])
-
-    if repeat_count >= 2:
-        return pick([
-            "Tu same cheez repeat kar raha hai",
-            "Ye line tu pehle bhi bol chuka hai",
-            "Repeat karne se baat change nahi hogi",
-        ])
-
-    if avoid_count >= 3:
-        return pick([
-            "Tu lagataar avoid kar raha hai",
-            "Itna ignore karega to problem wahi rahegi",
-            "Tu sach bolne se bach raha hai",
-        ])
-
-    if frustration:
-        return pick([
-            "Tone change ho raha hai tera",
-            "Gussa aa raha hai kya",
-            "Relax kar, phir bol",
-        ])
-
-    # ===== MODE =====
-
-    if mode == "STRICT":
-        if memory["lazy"] > 3:
+        # SAFE fallback (never breaks)
+        if mode == "STRICT":
             return pick([
-                "Ye teri habit ban rahi hai delay karne ki",
-                "Tu khud ko seriously nahi le raha",
-                "Tu bas push kar raha hai, action nahi le raha",
+                "Tu delay kar raha hai, start kar",
+                "Action le warna same rahega",
             ])
-        return pick([
-            "Tu avoid kar raha hai, start kar",
-            "Action le warna kuch change nahi hoga",
-            "Bahane kam, kaam zyada",
-        ])
-
-    elif mode == "SOFT":
-        return pick([
-            "Good, tu effort daal raha hai",
-            "Progress ho raha hai, rukna mat",
-            "Consistency aa rahi hai",
-        ])
-
-    elif mode == "FUN":
-        return pick([
-            "Thoda chill bhi zaroori hai",
-            "Mood halka kar raha hai tu",
-            "Break bhi important hota hai",
-        ])
-
-    return pick([
-        "Tu clearly bol nahi raha abhi",
-        "Andar kuch chal raha hai",
-        "Main observe kar raha hoon",
-        "Seedha bol, kya issue hai",
-    ])
+        elif mode == "SOFT":
+            return pick([
+                "Good, continue kar",
+                "Progress ho raha hai",
+            ])
+        elif mode == "FUN":
+            return pick([
+                "Chal thoda chill karte hain",
+                "Mood halka kar",
+            ])
+        else:
+            return pick([
+                "Seedha bol, kya chal raha hai",
+                "Tu clearly bol nahi raha",
+            ])
 
 # ===== UI =====
 HTML = """
