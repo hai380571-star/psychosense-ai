@@ -3,24 +3,34 @@ body {
     font-family:sans-serif;
     background:#0f172a;
     color:white;
+    display:flex;
+    flex-direction:column;
+    height:100vh;
 }
 
+/* HEADER */
 .header {
     padding:12px;
     background:#020617;
+    flex-shrink:0;
 }
 
+/* CHAT AREA */
 #chat {
-    height: calc(100vh - 140px);
+    flex:1;
     overflow-y:auto;
     padding:10px;
+    display:flex;
+    flex-direction:column;
 }
 
+/* MESSAGES */
 .msg {
     padding:10px;
     margin:6px;
     border-radius:12px;
     max-width:75%;
+    word-wrap:break-word;
 }
 
 .user {
@@ -32,14 +42,12 @@ body {
     background:#1e293b;
 }
 
+/* FOOTER INPUT */
 .footer {
-    position:fixed;
-    bottom:0;
-    width:100%;
     display:flex;
     padding:10px;
     background:#020617;
-    box-sizing:border-box;
+    flex-shrink:0;
 }
 
 input {
@@ -57,4 +65,4 @@ button {
     color:white;
     border:none;
     border-radius:20px;
-}
+    }
