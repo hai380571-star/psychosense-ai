@@ -1,29 +1,23 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>PsychoSense V2</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<link rel="stylesheet" href="/static/style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PsychoSense 2.1</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-
 <body>
-
-<div class="header">
-    <div>
-        <b>PsychoSense V2</b><br>
-        <small>AI Behavioral Mirror</small>
+    <div class="chat-container">
+        <header>
+            <h1>PsychoSense 2.1</h1>
+            <p>Created by Abdul Hai</p>
+        </header>
+        <div id="chat-box"></div>
+        <div class="input-area">
+            <input type="text" id="user-input" placeholder="Apne vichaar likho...">
+            <button id="send-btn">Send</button>
+        </div>
     </div>
-</div>
-
-<div id="chat"></div>
-
-<div class="footer">
-    <input id="input" placeholder="Type your thoughts...">
-    <button onclick="send()">➤</button>
-</div>
-
-<script src="/static/script.js"></script>
-
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
