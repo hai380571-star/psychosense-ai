@@ -1,5 +1,5 @@
-from flask import Flask, request, jsonify, render_template
 import os
+from flask import Flask, render_template, request, jsonify
 
 app = Flask(__name__)
 
@@ -7,5 +7,12 @@ app = Flask(__name__)
 def home():
     return render_template("index.html")
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+@app.route("/chat", methods=["POST"])
+def chat():
+    data = request.json
+    msg = data.get("message")
+
+    return jsonify({
+        "reply": "PsychoSense: " + msg,
+        "mode": "test"
+    })
