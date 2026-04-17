@@ -1,11 +1,11 @@
 import os
 import re
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template # render_template yahan zaruri hai
 import google.generativeai as genai
 
 app = Flask(__name__)
 
-# 1. API Setup
+# API Setup
 api_key = os.getenv("GEMINI_API_KEY")
 genai.configure(api_key=api_key)
 
@@ -25,7 +25,8 @@ def remove_emojis(text):
 
 @app.route('/')
 def home():
-    return "PsychoSense 2.1 is Running!"
+    # Ye line aapke index.html ko load karegi
+    return render_template('index.html')
 
 @app.route('/chat', methods=['POST'])
 def chat():
