@@ -1,20 +1,23 @@
 import os
 import re
-from flask import Flask, request, jsonify, render_template
 import google.generativeai as genai
+from flask import Flask, request, jsonify, render_template
 
 app = Flask(__name__)
 
-# 1. API Configuration
+# 1. SDK Version Logging (BCA Debugging)
+import google.generativeai as pkg_version
+print(f"SYSTEM CHECK: Google Generative AI Version = {pkg_version.__version__}")
+
+# 2. API Setup
 api_key = os.getenv("GEMINI_API_KEY")
 if api_key:
     genai.configure(api_key=api_key)
 
-# 2. Model Setup (Strictly 1.5-flash)
+# 3. Model Setup (Trying the most stable string)
 model = genai.GenerativeModel('gemini-1.5-flash')
 
 def clean_text(text):
-    # Emojis hatane ka logic
     return re.sub(r'[^\x00-\x7f]', r'', text).strip()
 
 @app.route('/')
@@ -27,25 +30,22 @@ def chat():
         data = request.json
         user_msg = data.get("message", "")
         
-        # Identity aur Multi-language instruction
         prompt = (
             "You are PsychoSense AI by Abdul Hai. "
-            "Rule: Respond ONLY in the language the user is speaking. "
-            "Constraint: NO EMOJIS. Be blunt and direct. "
-            f"User says: {user_msg}"
+            "Respond ONLY in the user's language. NO EMOJIS. "
+            f"User: {user_msg}"
         )
         
-        # AI Response
         response = model.generate_content(prompt)
         
         if response.text:
             return jsonify({"reply": clean_text(response.text)})
         else:
-            return jsonify({"reply": "AI ne response nahi diya. Phir se try karo."})
+            return jsonify({"reply": "AI khamosh hai, phir se pucho."})
 
     except Exception as e:
-        # Asli error pakadne ke liye short message
-        return jsonify({"reply": f"Technical Glitch: {str(e)[:50]}"})
+        # Agar 1.5-flash fail ho, toh ye error bata dega
+        return jsonify({"reply": f"Technical Glitch: {str(e)[:100]}"})
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
