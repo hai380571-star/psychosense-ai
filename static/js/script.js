@@ -1,39 +1,76 @@
-// Setup Company Function
-function setupCompany() {
-    let data = {
-        name: document.getElementById('setupName').value,
-        addr: document.getElementById('setupAddr').value,
-        prefix: document.getElementById('setupPrefix').value,
-        start: document.getElementById('setupStart').value || 100
-    };
+// 1. CALCULATION LOGIC (Discount & Total)
+function calculateBill() {
+    let price = parseFloat(document.getElementById('item_price').value) || 0;
+    let qty = parseInt(document.getElementById('item_qty').value) || 0;
+    let discount = parseFloat(document.getElementById('discount_input').value) || 0;
 
-    if(!data.name || !data.addr || !data.prefix) return alert("Pehle saari details bharo bhai!");
+    // Pehle subtotal nikaalo
+    let subtotal = price * qty;
+    
+    // Final Total = Subtotal - Discount
+    let finalTotal = subtotal - discount;
 
-    fetch('/create-company', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(data)
-    }).then(() => {
-        location.reload(); // Refresh hote hi ab Dashboard dikhega
-    });
+    // UI par update karo
+    document.getElementById('display_subtotal').innerText = subtotal.toFixed(2);
+    document.getElementById('display_final_total').innerText = finalTotal.toFixed(2);
+    
+    // Hidden input mein save karo taaki Python ko bhej sakein
+    document.getElementById('total_input_hidden').value = finalTotal;
 }
 
-// Baki logic (Cart, Save Bill, Page Switch) same rahega...
-let cart = [];
-if(document.getElementById('dateLine')) {
-    document.getElementById('dateLine').innerText = new Date().toLocaleDateString();
+// 2. ITEM MODIFICATION (Pre-fill Form for Editing)
+function editItem(id, name, cost, price, stock) {
+    // Form ka title badal do
+    document.getElementById('form-title').innerText = "Modify Item: " + name;
+    
+    // Inputs mein purana data bhar do
+    document.getElementById('item_id').value = id;
+    document.getElementById('item_name').value = name;
+    document.getElementById('item_cost').value = cost; // Cost optional hai, handle ho jayega
+    document.getElementById('item_price').value = price;
+    document.getElementById('item_stock').value = stock;
+
+    // Focus on first input
+    document.getElementById('item_name').focus();
+    
+    // Scroll karke form tak le jao
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-function showPage(pageId) {
-    document.querySelectorAll('.page-content').forEach(p => p.classList.add('d-none'));
-    document.getElementById('page-' + pageId).classList.remove('d-none');
-    let offcanvas = bootstrap.Offcanvas.getInstance(document.getElementById('sidebar'));
-    if(offcanvas) offcanvas.hide();
+// 3. DATE FILTER (Daybook Logic)
+function filterByDate() {
+    let selectedDate = document.getElementById('date_picker').value;
+    if (selectedDate) {
+        // Page reload hoga naye date parameter ke saath
+        window.location.href = "/daybook?date=" + selectedDate;
+    }
 }
 
-function addToCart(name, price, cost) {
-    let item = cart.find(i => i.name === name);
-    if(item) { item.qty++; } else { cart.push({name, price, cost, qty: 1}); }
+// 4. PRINT COMMAND
+function printInvoice() {
+    // Print se pehle check karlo agar bill khali hai
+    let total = document.getElementById('display_final_total').innerText;
+    if (total == "0" || total == "0.00") {
+        alert("Bhai, khali bill print karke kya karoge? Pehle item add karo!");
+        return;
+    }
+    window.print();
+}
+
+// 5. AUTO-INITIALIZE
+document.addEventListener('DOMContentLoaded', () => {
+    console.log("Accounting System Ready!");
+    
+    // Agar cost field khali hai to placeholder dikhao (Optional Logic)
+    const costInput = document.getElementById('item_cost');
+    if (costInput) {
+        costInput.addEventListener('blur', function() {
+            if (this.value === "") {
+                console.log("Cost left empty, setting as optional (0)");
+            }
+        });
+    }
+});
     renderTable();
 }
 
