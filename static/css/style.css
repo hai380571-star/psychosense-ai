@@ -1,39 +1,30 @@
-/* TITAN ERP - Professional Theme */
-:root {
-    --primary-color: #0d6efd;
-    --success-color: #198754;
-    --dark-bg: #212529;
-    --light-bg: #f0f2f5;
+/* Print Logic */
+@media print {
+    body * { visibility: hidden; }
+    .printable-bill, .printable-bill * { visibility: visible; }
+    .printable-bill { position: absolute; left: 0; top: 0; width: 100%; }
+    .no-print { display: none !important; } /* Buttons hide karne ke liye */
 }
 
-body { 
-    background-color: var(--light-bg); 
-    font-family: 'Inter', -apple-system, sans-serif; 
-    font-size: 14px;
-    color: #333;
+/* Sidebar & Navigation */
+.sidebar {
+    width: 220px;
+    background: #1a1a2e; /* Thoda cinematic dark look */
+    color: #fff;
+    padding: 20px;
+    height: 100vh;
 }
 
-/* Setup & Billing Cards */
-.main-card { 
-    background: white; 
-    padding: 25px; 
-    border-radius: 15px; 
-    box-shadow: 0 10px 30px rgba(0,0,0,0.08); 
-    border: none;
+.sidebar a {
+    display: block;
+    color: #add8e6;
+    padding: 10px;
+    text-decoration: none;
+    border-radius: 5px;
+    margin-bottom: 5px;
 }
 
-/* Dashboard Stats */
-.stat-box { 
-    padding: 20px; 
-    border-radius: 12px; 
-    color: white; 
-    text-align: center; 
-    font-weight: 700; 
-    font-size: 1.1rem;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-}
-
-.bg-primary { background: linear-gradient(45deg, #4e73df, #224abe); }
+.sidebar a:hover { background: #16213e; }
 .bg-success { background: linear-gradient(45deg, #1cc88a, #13855c); }
 
 /* Sidebar Menu Styling */
