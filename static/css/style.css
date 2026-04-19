@@ -1,0 +1,16 @@
+body { background: #f4f6f9; font-family: 'Segoe UI', sans-serif; font-size: 14px; }
+.stat-box { padding: 20px; border-radius: 12px; color: white; text-align: center; margin-bottom: 15px; }
+.bg-rev { background: linear-gradient(45deg, #4e73df, #224abe); }
+.bg-prof { background: linear-gradient(45deg, #1cc88a, #13855c); }
+.main-card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+
+@media (max-width: 768px) {
+    .main-card { padding: 15px; margin: 5px; }
+    h2 { font-size: 1.4rem; }
+}
+
+@media print {
+    .no-print { display: none !important; }
+    .main-card { box-shadow: none; border: none; padding: 0; }
+    body { background: white; }
+}
